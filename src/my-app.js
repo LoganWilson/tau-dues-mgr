@@ -1,5 +1,7 @@
 
 const LCA_DRIVE_HOME='https://drive.google.com/drive/u/1/folders/0B-6Zm6wARaZ4eW9CMVl0VlgtVDA';
+const PAYPAL='https://www.paypal.com/myaccount/summary/'
+const FILE_I990='https://file990.org/';
 
 import { PolymerElement, html } from '@polymer/polymer/polymer-element.js';
 import { setPassiveTouchGestures, setRootPath } from '@polymer/polymer/lib/utils/settings.js';
@@ -80,7 +82,7 @@ class MyApp extends PolymerElement {
           <iron-selector selected="[[page]]" attr-for-selected="name" class="drawer-list" role="navigation">
             <a name="view1" href="[[rootPath]]view1">Active Members</a>
             <a name="view2" href="[[rootPath]]view2">Transactions</a>
-            <a name="view3" href="[[rootPath]]view3">All Members</a>
+            <a name="view3" href="[[rootPath]]view3">Members</a>
             <a name="driveLink" href="[[rootPath]]driveLink">Google Drive</a>
           </iron-selector>
         </app-drawer>
