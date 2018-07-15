@@ -80,7 +80,7 @@ class MyApp extends PolymerElement {
         <app-drawer id="drawer" slot="drawer" swipe-open="[[narrow]]">
           <app-toolbar>Menu</app-toolbar>
           <iron-selector selected="[[page]]" attr-for-selected="name" class="drawer-list" role="navigation">
-            <a name="view1" href="[[rootPath]]view1">Active Members</a>
+            <a name="members" href="[[rootPath]]members">Members</a>
             <a name="view2" href="[[rootPath]]view2">Transactions</a>
             <a name="view3" href="[[rootPath]]view3">Members</a>
             <a name="driveLink" href="[[rootPath]]driveLink">Google Drive</a>
@@ -98,7 +98,7 @@ class MyApp extends PolymerElement {
           </app-header>
 
           <iron-pages selected="[[page]]" attr-for-selected="name" role="main">
-            <my-view1 name="view1"></my-view1>
+            <members-view name="members"></members-view>
             <my-view2 name="view2"></my-view2>
             <my-view3 name="view3"></my-view3>
             <my-view404 name="view404"></my-view404>
@@ -142,8 +142,8 @@ class MyApp extends PolymerElement {
      // If no page was found in the route data, page will be an empty string.
      // Show 'view1' in that case. And if the page doesn't exist, show 'view404'.
     if (!page) {
-      this.page = 'view1';
-    } else if (['view1', 'view2', 'view3', 'driveLink'].indexOf(page) !== -1) {
+      this.page = 'members';
+    } else if (['members', 'view2', 'view3', 'driveLink'].indexOf(page) !== -1) {
       this.page = page;
     } else {
       this.page = 'view404';
@@ -161,8 +161,8 @@ class MyApp extends PolymerElement {
     // Note: `polymer build` doesn't like string concatenation in the import
     // statement, so break it up.
     switch (page) {
-      case 'view1':
-        import('./my-view1.js');
+      case 'members':
+        import('./members-view.js');
         break;
       case 'view2':
         import('./my-view2.js');
@@ -173,7 +173,7 @@ class MyApp extends PolymerElement {
       case 'driveLink':
         this.$.driveLink.href = LCA_DRIVE_HOME;
         this.$.driveLink.click();
-        this.set('page', 'view1');
+        this.set('page', 'members');
         break;
       case 'view404':
         import('./my-view404.js');
