@@ -94,6 +94,11 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         messagingSenderId: "436398502433"
       };
       firebase.initializeApp(config);
+
+      const messaging = firebase.messaging();
+      const FIREBASE_MSG_KEY = 'BMFEDPOPg6IjokxMw_RpYu9ellWI9nvj0SeXHTR5ftJHe6yqzjHvtjDlhFK3VthTpFRMjp4Qnv-OtX7rbSe3gEg';
+      messaging.usePublicVapidKey(FIREBASE_MSG_KEY);
+
       const firestore = firebase.firestore();
       const settings = {timestampsInSnapshots: true};
       firestore.settings(settings);

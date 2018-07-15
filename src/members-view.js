@@ -1,6 +1,8 @@
 
 const PAYPAL_ME = "https://www.paypal.me/LCAPhiPhi/"
 const SEND_EMAIL_PHP = 'https://www.csl.mtu.edu/classes/cs4760/www/projects/s18/group2/www/.logan/tau-dues-mgr/sendEmail.php';
+const SEND_MSG_PHP = 'https://www.csl.mtu.edu/classes/cs4760/www/projects/s18/group2/www/.logan/tau-dues-mgr/sendMessage.php'
+const TEXT_LOCAL_API_KEY = '65IcCitBteg-P3v00H3Lv541tWrIxTEeubsWMROnV8';
 
 import { PolymerElement, html } from '@polymer/polymer/polymer-element.js';
 import './shared-styles.js';
@@ -34,7 +36,7 @@ class MembersView extends PolymerElement {
       <vaadin-button theme="primary" on-click="_addMember">Add Member</vaadin-button>
       <vaadin-button theme="primary" on-click="_saveChanges">Save Changes</vaadin-button>
       <vaadin-button theme="primary" on-click="_toggleTransaction">Create Transaction</vaadin-button>
-      <vaadin-button theme="secondary" on-click="_sendEmails">Send Emails</vaadin-button>
+      <vaadin-button theme="primary" on-click="_sendEmails">Send Email/Text</vaadin-button>
       <vaadin-checkbox checked="{{showDetails}}">All Details</vaadin-checkbox>
 
       <vaadin-grid id="grid" items="{{shownMembers}}" height-by-rows on-active-item-changed="_showRowDetails">
@@ -83,14 +85,14 @@ class MembersView extends PolymerElement {
         <vaadin-grid-column hidden=[[!showDetails]]>
           <template class="header">Active</template>
           <template>
-            <vaadin-checkbox checked="{{item.active}}" on-click="[[_rowEdited(item)]]"></vaadin-checkbox></vaadin-text-field>
+            <vaadin-checkbox checked="{{item.active}}" on-click="[[_rowEdited(item)]]"></vaadin-checkbox>
           </template>
         </vaadin-grid-column>
 
         <vaadin-grid-column hidden=[[!showDetails]]>
           <template class="header">Associate</template>
           <template>
-            <vaadin-checkbox checked="{{item.associate}}" on-click="[[_rowEdited(item)]]"></vaadin-checkbox></vaadin-text-field>
+            <vaadin-checkbox checked="{{item.associate}}" on-click="[[_rowEdited(item)]]"></vaadin-checkbox>
           </template>
         </vaadin-grid-column>
 
@@ -102,6 +104,63 @@ class MembersView extends PolymerElement {
         </vaadin-grid-column>
 
       </vaadin-grid>
+
+      <paper-dialog id="transaction">
+        <vaadin-form-layout>
+          <vaadin-form-item>
+            <vaadin-dropdown-menu id="transactionType" label="Transaction Type" value="Bill Amount">
+              <template>
+                <vaadin-list-box>
+                  <vaadin-item>Bill Amount</vaadin-item>
+                  <vaadin-item>Record Payment</vaadin-item>
+                </vaadin-list-box>
+              </template>
+            </vaadin-dropdown-menu>
+          </vaadin-form-item>
+          <vaadin-form-item>
+            <vaadin-text-field id="transactionAmount" label="Amount $" placeholder="0.00"></vaadin-text-field>
+          </vaadin-form-item>
+          <vaadin-form-item>
+            <vaadin-text-field id="transactionMemo" label="Memo"></vaadin-text-field>
+          </vaadin-form-item>
+          <vaadin-form-item>
+            <vaadin-button theme="secondary" on-click="_toggleTransaction">Cancel</vaadin-button>
+            <vaadin-button theme="primary" on-click="_createTransaction">Confirm</vaadin-button>
+          </vaadin-form-item>
+        <vaadin-form-layout>
+      </paper-dialog>
+
+      <paper-dialog id="message">
+        <vaadin-form-layout>
+          <vaadin-form-item>
+            <vaadin-dropdown-menu id="messageType" label="Message Type" value="Email and Text">
+              <template>
+                <vaadin-list-box>
+                  <vaadin-item>Email and Text</vaadin-item>
+                  <vaadin-item>Email</vaadin-item>
+                  <vaadin-item>Text</vaadin-item>
+                </vaadin-list-box>
+              </template>
+            </vaadin-dropdown-menu>
+          </vaadin-form-item>
+          <vaadin-form-item>
+            <vaadin-text-field id="messageSubject" label="Message Subject" value="LCA Dues"></vaadin-text-field>
+          </vaadin-form-item>
+          <vaadin-form-item>
+            <vaadin-text-field id="replyEmail" label="Your Email (sent from)" value="LCATau@mtu.edu"></vaadin-text-field>
+          </vaadin-form-item>
+          <vaadin-form-item>
+            <vaadin-text-field id="additionalMessageContent" label="Additional Message Content" value=""></vaadin-text-field>
+          </vaadin-form-item>
+          <vaadin-form-item>
+            <vaadin-checkbox id="includePaymentHistory">Include payment history</vaadin-checkbox>
+          </vaadin-form-item>
+          <vaadin-form-item>
+            <vaadin-button theme="secondary" on-click="_toggleMessage">Cancel</vaadin-button>
+            <vaadin-button theme="primary" on-click="_sendMessages">Send</vaadin-button>
+          </vaadin-form-item>
+        <vaadin-form-layout>
+      </paper-dialog>
 
       <paper-dialog id="transaction">
         <vaadin-form-layout>
@@ -317,6 +376,7 @@ class MembersView extends PolymerElement {
 
   _sendEmails() {
     var self = this;
+
     console.log("selectedItems", self.$.grid.selectedItems);
     self.$.grid.selectedItems.forEach((member) => {
       var emailData = {};
@@ -324,7 +384,7 @@ class MembersView extends PolymerElement {
       if (member.balance >= 0) {
         emailData.msg = "Your dues are all paid off. Your current balance is $" + member.balance + "\n\n";
       } else {
-        emailData.msg = "You have a total of $" + Math.abs(member.balance) + " pending in payments.\n\n";
+        emailData.msg = "You have a total of $" + Math.abs(member.balance) + " pending in payments. (balance of " + member.balance + ")\n\n";
       }
       if (member.transactions.length > 0) {
         emailData.msg += "Recent transaction history:\n" +"Date           Amount\n"
@@ -332,19 +392,95 @@ class MembersView extends PolymerElement {
       for (var i = 0; i < member.transactions.length && i < 6; i++) {
         var transaction = member.transactions[i];
         if (transaction.amount > 0) {
-          emailData.msg += transaction.date + "    paid $" + transaction.amount +"\n"
+          emailData.msg += transaction.date + "      paid $" + transaction.amount +"\n"
         } else {
-          emailData.msg += transaction.date + " charged $" + Math.abs(transaction.amount) +"\n"
+          emailData.msg += transaction.date + "  charged $" + Math.abs(transaction.amount) +"\n"
         }
       }
       emailData.msg += "\nPay using PayPal: " + PAYPAL_ME + Math.abs(member.balance).toFixed(2) + "\n"
       console.log("sending", emailData, $("#grid"));
+
       $.ajax({
         url: SEND_EMAIL_PHP,
         type: 'post',
+        crossDomain: true,
+        dataType: 'json',
         data: {"email-data" : JSON.stringify(emailData)},
         success: function(data) { console.log("php email sent ", data) },
         error: function() { console.error("php email not sent") }
+      });
+    });
+  }
+
+  _toggleMessage() {
+    var self = this;
+    if (self.$.grid.selectedItems.length == 0) {
+      self._toggleAlert("No members selected to send message to");
+    } else {
+      self.$.message.toggle();
+    }
+  }
+
+  _sendMessages() {
+    var self = this;
+    self.$.message.close();
+    var messageType = self.$.messageType.value;
+    var messageSubject = self.$.messageSubject.value;
+    var replyEmail = self.$.replyEmail.value;
+    var additionalMessageContent = self.$.additionalMessageContent.value;
+    var includePaymentHistory = self.$.includePaymentHistory.checked;
+
+    self.$.grid.selectedItems.forEach((member) => {
+
+      var msg = "";
+      if (additionalMessageContent != "") {
+        msg += additionalMessageContent + "\n\n";
+      }
+      if (member.balance >= 0) {
+        msg += "Your dues are all paid off. Your current balance is $" + member.balance + "\n\n";
+      } else {
+        msg += "You have a total of $" + Math.abs(member.balance) + " pending in payments. (balance of " + member.balance + ")\n\n";
+      }
+
+      if (messageType == "Email" || messageType == "Email and Text") {
+        var emailData = {};
+        emailData.to = member.email;
+        emailData.from = replyEmail;
+        emailData.subject = messageSubject;
+        emailData.msg = msg;
+
+        if (includePaymentHistory) {
+          if (member.transactions.length > 0) {
+            emailData.msg += "Recent transaction history:\n" +"Date           Amount\n"
+          }
+          for (var i = 0; i < member.transactions.length && i < 6; i++) {
+            var transaction = member.transactions[i];
+            if (transaction.amount > 0) {
+              emailData.msg += transaction.date + "      paid $" + transaction.amount +"\n"
+            } else {
+              emailData.msg += transaction.date + "  charged $" + Math.abs(transaction.amount) +"\n"
+            }
+          }
+        }
+        emailData.msg += "\nPay using PayPal: " + PAYPAL_ME + Math.abs(member.balance).toFixed(2) + "\n";
+      }
+      var textData = {};
+      if (messageType == "Text" || messageType == "Email and Text") {
+        textData.apiKey = TEXT_LOCAL_API_KEY;
+        textData.phone = Number(member.phone.replace(/\D/g, ''));
+        textData.msg = msg;
+        textData.msg += "\nPay using PayPal: " + PAYPAL_ME + Math.abs(member.balance).toFixed(2) + "\n";
+      }
+
+      var data = {"email-data": JSON.stringify(emailData), "text-data": JSON.stringify(textData)};
+      $.ajax({
+        url: SEND_MSG_PHP,
+        type: 'post',
+        crossDomain: true,
+        dataType: 'json',
+        data: data,
+        success: function(data) { console.log("sent ", data) },
+        error: function() { console.error("not sent") }
       });
     });
   }
