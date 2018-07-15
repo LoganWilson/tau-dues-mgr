@@ -37,7 +37,7 @@ class MyView3 extends PolymerElement {
         <template class="row-details">
           <div class="details" >
             <vaadin-item>
-              <div><strong>Amount:</strong></div>
+              <div><strong>History:</strong></div>
               <div><small><strong>Date:</strong></small></div>
             </vaadin-item>
             <template is="dom-repeat" items="[[item.transactions]]" as="transaction">
@@ -79,6 +79,13 @@ class MyView3 extends PolymerElement {
           <template class="header">Active</template>
           <template>
             <vaadin-checkbox checked="{{item.active}}" on-click="[[_rowEdited(item)]]"></vaadin-checkbox></vaadin-text-field>
+          </template>
+        </vaadin-grid-column>
+
+        <vaadin-grid-column hidden=[[!showDetails]]>
+          <template class="header">Associate</template>
+          <template>
+            <vaadin-checkbox checked="{{item.associate}}" on-click="[[_rowEdited(item)]]"></vaadin-checkbox></vaadin-text-field>
           </template>
         </vaadin-grid-column>
 
@@ -168,26 +175,16 @@ class MyView3 extends PolymerElement {
         console.log("got member", memberDoc.data())
         var member = {};
         member = memberDoc.data();
-        if (member.transactions != undefined) {
-          member.transactions = member.transactions.sort((a, b) => b.timestamp - a.timestamp);
-        }
         console.log("member", member);
         self.push("members", member);
       });
-      var activeMembers = [];
-      self.members.forEach((member) => {
-        if (member.active) {
-          activeMembers.push(member);
-        }
-      });
-      self.set("activeMembers",  activeMembers);
       self._showMembers();
     });
   }
 
   _addMember() {
     var self = this;
-    self.push('shownMembers', {"active": true, "balance": 0, "transactions": []});
+    self.push('shownMembers', {"active": true, "associate": true, "balance": 0, "transactions": []});
   }
 
   _isNew(item) {
@@ -207,11 +204,22 @@ class MyView3 extends PolymerElement {
 
   _showMembers() {
     var self = this;
+    var activeMembers = [];
+    self.members.forEach((member) => {
+      if (member.transactions != undefined) {
+        member.transactions = member.transactions.sort((a, b) => b.timestamp - a.timestamp);
+      }
+      if (member.active) {
+        activeMembers.push(member);
+      }
+    });
+    self.set("activeMembers",  activeMembers);
     if (self.showDetails) {
       self.set("shownMembers", _.cloneDeep(self.members));
     } else {
       self.set("shownMembers", _.cloneDeep(self.activeMembers));
     }
+    console.log(self.members, self.shownMembers, self.activeMembers)
   }
 
   _saveChanges() {
@@ -219,19 +227,19 @@ class MyView3 extends PolymerElement {
     if (self.$.grid.selectedItems.length == 0) {
       self._toggleAlert("No members selected to save");
     } else {
+      var err = false;
       self.$.grid.selectedItems.forEach((member) => {
-
         // if there is a change in the object
         if (_.find(self.members, member) == undefined) {
           // get the original member object
-          var origMemberSingleton = _.remove(self.members, {"name": member.name});
-          var origMember = origMemberSingleton[0];
+          var mIndex = self.members.findIndex((m) => m.name == member.name);
+          var origMember = self.members[mIndex];
 
           if (origMember != undefined && origMember.balance != member.balance) {
             // then create a transaction
             var today = new Date();
             today = today.getMonth()+1 + '/' + today.getDate() + '/' + today.getFullYear();
-            var amount = member.balance - origMember.balance;
+            var amount = (member.balance - origMember.balance).toFixed(2);
             var timestamp = Date.now();
             var transaction = {
               'date': today,
@@ -240,21 +248,28 @@ class MyView3 extends PolymerElement {
             };
             if (member.transactions == undefined) member.transactions = [];
             member.transactions.push(transaction);
+            self.members[mIndex] = member;
+          } else if (origMember == undefined) {
+            // new members
+            self.members.push(member);
           }
-
+          // update in the DB
           firestore.collection("members").doc(member.name).set(member)
           .then(function() {
-            self._toggleAlert("Changes saved successfully");
           }).catch(function(error) {
             console.error("Error updating member document: ", error);
-            self._toggleAlert("Error with database");
+            if (!err) {
+              self._toggleAlert("Error with database");
+              err = true;
+            }
           });
-          self.push("members", _.cloneDeep(member));
-
-        } else {
-          console.log("already exists", member);
         }
       });
+      self.set("members", _.cloneDeep(self.members));
+      self._showMembers();
+      if (!err) {
+        self._toggleAlert("Save successful")
+      }
     }
   }
 
@@ -275,11 +290,11 @@ class MyView3 extends PolymerElement {
 
   _createTransaction() {
     var self = this;
+    self.$.transaction.close();
     var type = self.$.transactionType.value;
     var amount = Number(self.$.transactionAmount.value);
     var memo = self.$.transactionMemo.value;
     if (amount > 0) {
-
       if (type == "Bill Amount") {
         self.$.grid.selectedItems.forEach((member) => {
           member.balance = member.balance - amount;
