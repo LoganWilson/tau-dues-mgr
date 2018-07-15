@@ -1,5 +1,6 @@
 
 const PAYPAL_ME = "https://www.paypal.me/LCAPhiPhi/"
+const SEND_EMAIL_PHP = 'https://www.csl.mtu.edu/classes/cs4760/www/projects/s18/group2/www/.logan/tau-dues-mgr/sendEmail.php';
 
 import { PolymerElement, html } from '@polymer/polymer/polymer-element.js';
 import './shared-styles.js';
@@ -337,13 +338,13 @@ class MyView3 extends PolymerElement {
         }
       }
       emailData.msg += "\nPay using PayPal: " + PAYPAL_ME + Math.abs(member.balance).toFixed(2) + "\n"
-      console.log("sending", emailData);
+      console.log("sending", emailData, $("#grid"));
       $.ajax({
-        url: 'sendEmail.php',
+        url: SEND_EMAIL_PHP,
         type: 'post',
         data: {"email-data" : JSON.stringify(emailData)},
-        success: function(data) {  },
-        error: function() {  }
+        success: function(data) { console.log("php email sent ", data) },
+        error: function() { console.error("php email not sent") }
       });
     });
   }
