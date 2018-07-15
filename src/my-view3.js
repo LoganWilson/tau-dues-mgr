@@ -1,3 +1,6 @@
+
+const PAYPAL_ME = "https://www.paypal.me/LCAPhiPhi/"
+
 import { PolymerElement, html } from '@polymer/polymer/polymer-element.js';
 import './shared-styles.js';
 import '@vaadin/vaadin-grid/vaadin-grid.js';
@@ -30,6 +33,7 @@ class MyView3 extends PolymerElement {
       <vaadin-button theme="primary" on-click="_addMember">Add Member</vaadin-button>
       <vaadin-button theme="primary" on-click="_saveChanges">Save Changes</vaadin-button>
       <vaadin-button theme="primary" on-click="_toggleTransaction">Create Transaction</vaadin-button>
+      <vaadin-button theme="secondary" on-click="_sendEmails">Send Emails</vaadin-button>
       <vaadin-checkbox checked="{{showDetails}}">All Details</vaadin-checkbox>
 
       <vaadin-grid id="grid" items="{{shownMembers}}" height-by-rows on-active-item-changed="_showRowDetails">
@@ -172,10 +176,10 @@ class MyView3 extends PolymerElement {
     var self = this;
     firestore.collection("members").get().then((querySnapshot) => {
       querySnapshot.forEach((memberDoc) => {
-        console.log("got member", memberDoc.data())
+        // console.log("got member", memberDoc.data())
         var member = {};
         member = memberDoc.data();
-        console.log("member", member);
+        // console.log("member", member);
         self.push("members", member);
       });
       self._showMembers();
@@ -219,7 +223,7 @@ class MyView3 extends PolymerElement {
     } else {
       self.set("shownMembers", _.cloneDeep(self.activeMembers));
     }
-    console.log(self.members, self.shownMembers, self.activeMembers)
+    // console.log(self.members, self.shownMembers, self.activeMembers)
   }
 
   _saveChanges() {
@@ -303,12 +307,45 @@ class MyView3 extends PolymerElement {
         self.$.grid.selectedItems.forEach((member) => {
           member.balance = member.balance + amount;
         });
-      } else console.log("transaction type is fucked up...")
+      } else console.error("transaction type is fucked up...")
       self._saveChanges();
     } else {
       self._toggleAlert("The amount must be a rational number greater than zero");
     }
+  }
 
+  _sendEmails() {
+    var self = this;
+    console.log("selectedItems", self.$.grid.selectedItems);
+    self.$.grid.selectedItems.forEach((member) => {
+      var emailData = {};
+      emailData.to = member.email;
+      if (member.balance >= 0) {
+        emailData.msg = "Your dues are all paid off. Your current balance is $" + member.balance + "\n\n";
+      } else {
+        emailData.msg = "You have a total of $" + Math.abs(member.balance) + " pending in payments.\n\n";
+      }
+      if (member.transactions.length > 0) {
+        emailData.msg += "Recent transaction history:\n" +"Date           Amount\n"
+      }
+      for (var i = 0; i < member.transactions.length && i < 6; i++) {
+        var transaction = member.transactions[i];
+        if (transaction.amount > 0) {
+          emailData.msg += transaction.date + "    paid $" + transaction.amount +"\n"
+        } else {
+          emailData.msg += transaction.date + " charged $" + Math.abs(transaction.amount) +"\n"
+        }
+      }
+      emailData.msg += "\nPay using PayPal: " + PAYPAL_ME + Math.abs(member.balance).toFixed(2) + "\n"
+      console.log("sending", emailData);
+      $.ajax({
+        url: 'sendEmail.php',
+        type: 'post',
+        data: {"email-data" : JSON.stringify(emailData)},
+        success: function(data) {  },
+        error: function() {  }
+      });
+    });
   }
 
 }
