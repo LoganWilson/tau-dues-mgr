@@ -1,6 +1,6 @@
 /**
  * @license
- * Copyright (c) 2018 The Polymer Project Authors. All rights reserved.
+ * Copyright (c) 2016 The Polymer Project Authors. All rights reserved.
  * This code may only be used under the BSD style license found at http://polymer.github.io/LICENSE.txt
  * The complete set of authors may be found at http://polymer.github.io/AUTHORS.txt
  * The complete set of contributors may be found at http://polymer.github.io/CONTRIBUTORS.txt
@@ -8,20 +8,22 @@
  * subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
  */
 
-// Import statements in Polymer 3.0 can now use package names.
-// polymer-element.js now exports PolymerElement instead of Element,
-// so no need to change the symbol. 
 import { PolymerElement, html } from '@polymer/polymer/polymer-element.js';
 
-class LazyElement extends PolymerElement {
-  static get template () {
-    // Template getter must return an instance of HTMLTemplateElement.
-    // The html helper function makes this easy.
+class MyView404 extends PolymerElement {
+  static get template() {
     return html`
-      <p>You like pie.</p>
+      <style>
+        :host {
+          display: block;
+
+          padding: 10px 20px;
+        }
+      </style>
+
+      Oops you hit a 404. <a href="[[rootPath]]">Head back to home.</a>
     `;
   }
 }
 
-// Register the element with the browser.
-customElements.define('lazy-element', LazyElement);
+window.customElements.define('my-view404', MyView404);
