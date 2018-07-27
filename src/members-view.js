@@ -6,16 +6,6 @@ const TEXT_LOCAL_API_KEY = '65IcCitBteg-P3v00H3Lv541tWrIxTEeubsWMROnV8';
 
 import { PolymerElement, html } from '@polymer/polymer/polymer-element.js';
 import './shared-styles.js';
-import '@vaadin/vaadin-grid/vaadin-grid.js';
-import '@vaadin/vaadin-grid/vaadin-grid-selection-column.js';
-import '@vaadin/vaadin-grid/vaadin-grid-filter.js';
-import '@vaadin/vaadin-button/vaadin-button.js';
-import '@vaadin/vaadin-checkbox/vaadin-checkbox.js';
-import '@polymer/paper-dialog/paper-dialog.js';
-import '@vaadin/vaadin-dropdown-menu/vaadin-dropdown-menu'
-import '@vaadin/vaadin-text-field/vaadin-text-field'
-import '@vaadin/vaadin-form-layout/vaadin-form-layout'
-import '@polymer/iron-flex-layout/iron-flex-layout.js'
 
 class MembersView extends PolymerElement {
   static get template() {
@@ -41,7 +31,7 @@ class MembersView extends PolymerElement {
       <vaadin-button theme="primary" on-click="_saveChanges">Save Changes</vaadin-button>
       <vaadin-button theme="primary" on-click="_toggleTransaction">Create Transaction</vaadin-button>
       <vaadin-button theme="primary" on-click="_toggleMessage">Send Email/Text</vaadin-button>
-      <vaadin-checkbox checked="{{showDetails}}">All Details</vaadin-checkbox>
+      <vaadin-checkbox checked="{{showDetails}}">Details View</vaadin-checkbox>
 
       <vaadin-grid id="grid" items="{{shownMembers}}" height-by-rows on-active-item-changed="_showRowDetails">
 
@@ -67,7 +57,7 @@ class MembersView extends PolymerElement {
           <template>
             <template is="dom-if" if="[[!_isNew(item)]]">[[item.name]]</template>
             <template is="dom-if" if="[[_isNew(item)]]">
-              <vaadin-text-field class="text-" value="{{item.name::input}}" on-click="[[_rowEdited(item)]]"></vaadin-text-field>
+              <vaadin-text-field class="text-input" value="{{item.name::input}}" on-click="[[_rowEdited(item)]]"></vaadin-text-field>
             </template>
           </template>
         </vaadin-grid-column>
@@ -148,11 +138,6 @@ class MembersView extends PolymerElement {
           <vaadin-button theme="secondary" on-click="_toggleAlert">Close</vaadin-button>
         </div>
       </paper-dialog>
-
-      <div class="card">
-        <h1>Manage Members</h1>
-        <p>TODO: connect phone tree and show member details (import from phone tree, export to phone tree). allow adding to phone tree and adding from phone tree to the app database. move members from active to inactive (keep values in DB for if they get moved again). add purge functionality</p>
-      </div>
     `;
   }
 

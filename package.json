@@ -29,6 +29,7 @@
     "@polymer/paper-icon-button": "^3.0.0-pre.15",
     "@polymer/paper-item": "^3.0.0-pre.21",
     "@polymer/paper-listbox": "^3.0.0-pre.21",
+    "@polymer/paper-toggle-button": "^3.0.0-pre.21",
     "@polymer/polymer": "^3.0.0",
     "@vaadin/vaadin-button": "^2.1.0-alpha3",
     "@vaadin/vaadin-dropdown-menu": "^1.1.0-alpha2",

@@ -16,6 +16,18 @@ import '@polymer/app-route/app-route.js';
 import '@polymer/iron-pages/iron-pages.js';
 import '@polymer/iron-selector/iron-selector.js';
 import '@polymer/paper-icon-button/paper-icon-button.js';
+import '@vaadin/vaadin-grid/vaadin-grid.js';
+import '@vaadin/vaadin-grid/vaadin-grid-selection-column.js';
+import '@vaadin/vaadin-grid/vaadin-grid-filter.js';
+import '@vaadin/vaadin-button/vaadin-button.js';
+import '@vaadin/vaadin-checkbox/vaadin-checkbox.js';
+import '@polymer/paper-dialog/paper-dialog.js';
+import '@vaadin/vaadin-dropdown-menu/vaadin-dropdown-menu'
+import '@vaadin/vaadin-text-field/vaadin-text-field'
+import '@vaadin/vaadin-text-field/vaadin-text-area.js'
+import '@vaadin/vaadin-form-layout/vaadin-form-layout'
+import '@polymer/iron-flex-layout/iron-flex-layout.js'
+import '@polymer/paper-toggle-button/paper-toggle-button.js'
 import './my-icons.js';
 import "lodash";
 
@@ -81,14 +93,13 @@ class MyApp extends PolymerElement {
           <app-toolbar>Menu</app-toolbar>
           <iron-selector selected="[[page]]" attr-for-selected="name" class="drawer-list" role="navigation">
             <a name="members" href="[[rootPath]]members">Members</a>
-            <a name="view2" href="[[rootPath]]view2">Transactions</a>
-            <a name="view3" href="[[rootPath]]view3">Members</a>
+            <a name="budget" href="[[rootPath]]budget">Budget</a>
             <a name="driveLink" href="[[rootPath]]driveLink">Google Drive</a>
           </iron-selector>
         </app-drawer>
 
         <!-- Main content -->
-        <app-header-layout has-scrolling-region="">
+        <app-header-layout index="appLayout" has-scrolling-region="">
 
           <app-header slot="header" condenses="" reveals="" effects="waterfall">
             <app-toolbar>
@@ -99,8 +110,7 @@ class MyApp extends PolymerElement {
 
           <iron-pages selected="[[page]]" attr-for-selected="name" role="main">
             <members-view name="members"></members-view>
-            <my-view2 name="view2"></my-view2>
-            <my-view3 name="view3"></my-view3>
+            <budget-view name="budget"></budget-view>
             <my-view404 name="view404"></my-view404>
             <a id="driveLink" target="_blank" name="driveLink">LCA Drive</a>
           </iron-pages>
@@ -130,6 +140,10 @@ class MyApp extends PolymerElement {
     super.ready();
   }
 
+  _googleAuthorized(data) {
+    console.log("googleAuthorized", data)
+  }
+
   static get observers() {
     return [
       '_routePageChanged(routeData.page)'
@@ -143,7 +157,7 @@ class MyApp extends PolymerElement {
      // Show 'view1' in that case. And if the page doesn't exist, show 'view404'.
     if (!page) {
       this.page = 'members';
-    } else if (['members', 'view2', 'view3', 'driveLink'].indexOf(page) !== -1) {
+    } else if (['members', 'budget', 'driveLink'].indexOf(page) !== -1) {
       this.page = page;
     } else {
       this.page = 'view404';
@@ -164,11 +178,8 @@ class MyApp extends PolymerElement {
       case 'members':
         import('./members-view.js');
         break;
-      case 'view2':
-        import('./my-view2.js');
-        break;
-      case 'view3':
-        import('./my-view3.js');
+      case 'budget':
+        import('./budget-view.js');
         break;
       case 'driveLink':
         this.$.driveLink.href = LCA_DRIVE_HOME;
@@ -179,6 +190,13 @@ class MyApp extends PolymerElement {
         import('./my-view404.js');
         break;
     }
+  }
+
+  signOut() {
+    var auth2 = gapi.auth2.getAuthInstance();
+    auth2.signOut().then(function () {
+      console.log('User signed out.');
+    });
   }
 }
 
